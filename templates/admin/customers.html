@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Customers - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-users"></i> Manage Customers</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>City</th>
+                            <th>Joined</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers.items %}
+                        <tr>
+                            <td>#{{ customer.id }}</td>
+                            <td>
+                                <img src="{{ customer.profile_photo or 'https://ui-avatars.com/api/?name=' + customer.full_name|urlencode + '&background=667eea&color=fff&size=40' }}" 
+                                     class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                            </td>
+                            <td>{{ customer.full_name }}</a></td>
+                            <td>{{ customer.email }}</a></td>
+                            <td>{{ customer.phone }}</a></td>
+                            <td>{{ customer.city or 'N/A' }}</a></td>
+                            <td>{{ customer.created_at.strftime('%d %b, %Y') }}</a></td>
+                            <td>
+                                {% if customer.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Blocked</span>
+                                {% endif %}
+                             </a>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin_customer_detail', customer_id=customer.id) }}" 
+                                       class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    {% if customer.is_active %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-warning" 
+                                            onclick="toggleCustomerStatus({{ customer.id }}, false)">
+                                        <i class="fas fa-ban"></i> Block
+                                    </button>
+                                    {% else %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-success" 
+                                            onclick="toggleCustomerStatus({{ customer.id }}, true)">
+                                        <i class="fas fa-check"></i> Activate
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if customers.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if customers.has_prev %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('admin_customers', page=customers.prev_num) }}">Previous</a></li>
+                    {% endif %}
+                    {% for page_num in customers.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == customers.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_customers', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if customers.has_next %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('admin_customers', page=customers.next_num) }}">Next</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCustomerStatus(customerId, activate) {
+    const action = activate ? 'activate' : 'block';
+    if (confirm(`Are you sure you want to ${action} this customer?`)) {
+        fetch(`/admin/customers/${customerId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({activate: activate})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Could not update status'));
+            }
+        })
+        .catch(error => {
+            alert('Error updating customer status');
+        });
+    }
+}
+</script>
+{% endblock %}

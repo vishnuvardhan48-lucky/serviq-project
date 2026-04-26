@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Serviq{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: transform 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-icon {
+        font-size: 3rem;
+        opacity: 0.8;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    .stat-label {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    .cursor-pointer:hover {
+        transform: translateY(-3px);
+        transition: transform 0.3s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h2>
+            <p class="text-muted">Welcome back, {{ current_user.full_name }}! Here's what's happening today.</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards - All with consistent layout -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ total_customers + total_providers }}</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                </div>
+                <div class="mt-3">
+                    <small>{{ total_customers }} Customers | {{ total_providers }} Providers</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ total_bookings }}</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                </div>
+                <div class="mt-3">
+                    <small>Completed: {{ completed_bookings }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">₹{{ "{:,.0f}".format(total_revenue) }}</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
+                </div>
+                <div class="mt-3">
+                    <small>Lifetime earnings</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ pending_providers }}</div>
+                        <div class="stat-label">Pending Approvals</div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('admin_providers', status='pending') }}" class="text-white">Review Now →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12"><h4>Quick Actions</h4></div>
+        <div class="col-md-3">
+            <div class="card text-center p-3 cursor-pointer" onclick="window.location.href='{{ url_for('admin_providers', status='pending') }}'">
+                <i class="fas fa-user-check fa-3x text-primary mb-2"></i>
+                <h6>Review Providers</h6>
+                <small class="text-muted">{{ pending_providers }} pending</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3 cursor-pointer" onclick="window.location.href='{{ url_for('admin_bookings') }}'">
+                <i class="fas fa-calendar-alt fa-3x text-success mb-2"></i>
+                <h6>Manage Bookings</h6>
+                <small class="text-muted">View all bookings</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3 cursor-pointer" onclick="window.location.href='{{ url_for('admin_customers') }}'">
+                <i class="fas fa-user-cog fa-3x text-info mb-2"></i>
+                <h6>Manage Users</h6>
+                <small class="text-muted">View all users</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3 cursor-pointer" onclick="window.location.href='{{ url_for('admin_reports') }}'">
+                <i class="fas fa-chart-line fa-3x text-warning mb-2"></i>
+                <h6>View Reports</h6>
+                <small class="text-muted">Analytics & insights</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Bookings -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Recent Bookings</h5>
+                    <a href="{{ url_for('admin_bookings') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Booking #</th>
+                                    <th>Customer</th>
+                                    <th>Provider</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td><a href="{{ url_for('admin_booking_detail', booking_id=booking.id) }}">{{ booking.booking_number }}</a></td>
+                                    <td>{{ booking.customer.full_name }}</td>
+                                    <td>{{ booking.provider.full_name }}</td>
+                                    <td>₹{{ "%.0f"|format(booking.total_amount) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if booking.status == 'confirmed' else 'warning' if booking.status == 'pending' else 'info' if booking.status == 'completed' else 'danger' }}">
+                                            {{ booking.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Providers -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Top Rated Providers</h5>
+                </div>
+                <div class="card-body">
+                    {% for provider in recent_providers %}
+                    <div class="d-flex align-items-center mb-3">
+                        {% if provider.profile_photo %}
+                            <img src="{{ url_for('uploaded_file', filename=provider.profile_photo) }}" 
+                                 class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;"
+                                 onerror="this.src='https://ui-avatars.com/api/?name={{ provider.full_name|urlencode }}&background=667eea&color=fff&size=50'">
+                        {% else %}
+                            <img src="https://ui-avatars.com/api/?name={{ provider.full_name|urlencode }}&background=667eea&color=fff&size=50" 
+                                 class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{{ provider.full_name }}</h6>
+                            <div class="rating-stars">
+                                {% for i in range(5) %}
+                                    {% if i < provider.average_rating|int %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif i < provider.average_rating and provider.average_rating % 1 >= 0.5 %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <small class="text-muted">({{ provider.total_reviews }} reviews)</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <strong>₹{{ "%.0f"|format(provider.starting_price) }}</strong><br>
+                            <small class="text-muted">{{ provider.city }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

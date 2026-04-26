@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h1 class="text-center mb-4">Contact Us</h1>
+                    <p class="text-center text-muted mb-4">We'd love to hear from you! Send us a message and we'll respond as soon as possible.</p>
+                    <form method="POST">
+                        <div class="mb-3"><label>Your Name</label><input type="text" name="name" class="form-control" required></div>
+                        <div class="mb-3"><label>Email Address</label><input type="email" name="email" class="form-control" required></div>
+                        <div class="mb-3"><label>Message</label><textarea name="message" class="form-control" rows="5" required></textarea></div>
+                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p><i class="fas fa-phone me-2"></i> +91 98765 43210</p>
+                        <p><i class="fas fa-envelope me-2"></i> support@serviq.com</p>
+                        <p><i class="fas fa-map-marker-alt me-2"></i> India</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

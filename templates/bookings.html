@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Bookings - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-calendar-alt"></i> All Bookings</h4></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>Booking #</th><th>Date</th><th>Customer</th><th>Provider</th><th>Service</th><th>Amount</th><th>Status</th><th>Payment</th></tr></thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td><a href="{{ url_for('admin_booking_detail', booking_id=booking.id) }}">{{ booking.booking_number }}</a></td>
+                            <td>{{ booking.created_at.strftime('%d-%m-%Y') }}</td>
+                            <td>{{ booking.customer.full_name }}</td>
+                            <td>{{ booking.provider.full_name }}</td>
+                            <td>{{ booking.service_name }}</td>
+                            <td>₹{{ "%.0f"|format(booking.total_amount) }}</td>
+                            <td><span class="badge bg-{{ 'success' if booking.status == 'confirmed' else 'warning' if booking.status == 'pending' else 'info' if booking.status == 'completed' else 'danger' }}">{{ booking.status }}</span></td>
+                            <td><span class="badge bg-{{ 'success' if booking.payment_status == 'paid' else 'danger' }}">{{ booking.payment_status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

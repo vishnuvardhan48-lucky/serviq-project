@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Status - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow text-center">
+                <div class="card-body p-5">
+                    {% if booking.payment_status == 'paid' %}
+                        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                        <h2 class="text-success">Payment Successful!</h2>
+                        <p>Your booking has been confirmed.</p>
+                        <p class="text-muted">Booking #{{ booking.booking_number }}</p>
+                    {% else %}
+                        <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+                        <h2 class="text-danger">Payment Failed</h2>
+                        <p>There was an issue with your payment. Please try again.</p>
+                    {% endif %}
+                    
+                    <hr>
+                    <a href="{{ url_for('booking_detail', booking_id=booking.id) }}" class="btn btn-primary">View Booking Details</a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary ms-2">Go Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

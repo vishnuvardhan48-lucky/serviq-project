@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-credit-card"></i> Payment Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Booking #{{ booking.booking_number }}</strong><br>
+                        Service: {{ booking.service_name }}<br>
+                        Amount: ₹{{ "%.0f"|format(booking.total_amount) }}<br>
+                        Date: {{ booking.service_date.strftime('%d %b, %Y') }} at {{ booking.service_time.strftime('%I:%M %p') }}
+                    </div>
+                    
+                    <form id="paymentForm">
+                        <button type="button" id="rzp-button" class="btn btn-primary btn-lg w-100">Pay Now</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('rzp-button').addEventListener('click', function(e) {
+    fetch('{{ url_for("payment", booking_id=booking.id) }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            var options = {
+                "key": data.key_id,
+                "amount": data.amount,
+                "currency": "INR",
+                "name": "Serviq",
+                "description": "Booking #{{ booking.booking_number }}",
+                "order_id": data.order_id,
+                "handler": function (response) {
+                    fetch('{{ url_for("verify_payment") }}', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = '{{ url_for("payment", booking_id=booking.id) }}';
+                        } else {
+                            alert('Payment verification failed');
+                        }
+                    });
+                },
+                "theme": {"color": "#667eea"}
+            };
+            var rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            alert('Error creating order: ' + data.error);
+        }
+    });
+});
+</script>
+{% endblock %}

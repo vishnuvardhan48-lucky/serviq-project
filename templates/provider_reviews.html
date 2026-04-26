@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}My Reviews - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-star"></i> Customer Reviews</h4></div>
+        <div class="card-body">
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="mb-4 border-bottom pb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ review.customer.full_name }}</h6>
+                            <div class="rating-stars mb-2">
+                                {% for i in range(5) %}{% if i < review.rating %}<i class="fas fa-star"></i>{% else %}<i class="far fa-star"></i>{% endif %}{% endfor %}
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ review.created_at.strftime('%d %b, %Y') }}</small>
+                    </div>
+                    <p class="mb-0">{{ review.comment }}</p>
+                </div>
+                {% endfor %}
+            {% else %}<p class="text-center text-muted py-4">No reviews yet</p>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

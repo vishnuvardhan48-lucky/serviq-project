@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-users-cog"></i> User Management</h4></div>
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item"><a class="nav-link {% if not request.args.get('type') %}active{% endif %}" href="{{ url_for('admin_users') }}">All Users</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.args.get('type') == 'customer' %}active{% endif %}" href="{{ url_for('admin_users', type='customer') }}">Customers</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.args.get('type') == 'provider' %}active{% endif %}" href="{{ url_for('admin_users', type='provider') }}">Providers</a></li>
+            </ul>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>ID</th><th>Photo</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>City</th><th>Price</th><th>Experience</th><th>Rating</th><th>Joined</th></tr></thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>#{{ user.id }}</td>
+                            <td><img src="{{ user.profile_photo or 'https://ui-avatars.com/api/?name=' + user.full_name|urlencode + '&background=667eea&color=fff&size=40' }}" class="rounded-circle" style="width:40px;height:40px;object-fit:cover"></td>
+                            <td>{{ user.full_name }}</td><td>{{ user.email }}</td><td>{{ user.phone }}</td>
+                            <td><span class="badge bg-{{ 'primary' if user.role == 'customer' else 'success' if user.role == 'provider' else 'danger' }}">{{ user.role }}</span></td>
+                            <td>{% if user.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}{% if user.role == 'provider' and not user.is_approved %}<span class="badge bg-warning ms-1">Pending</span>{% endif %}</td>
+                            <td>{{ user.city or 'N/A' }}</td><td>{% if user.starting_price %}₹{{ "%.0f"|format(user.starting_price) }}{% else %}N/A{% endif %}</td>
+                            <td>{% if user.years_experience %}{{ user.years_experience }} yrs{% else %}N/A{% endif %}</td>
+                            <td>{% if user.average_rating %}{{ "%.1f"|format(user.average_rating) }} ⭐ ({{ user.total_reviews }}){% else %}N/A{% endif %}</td>
+                            <td>{{ user.created_at.strftime('%d-%m-%Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

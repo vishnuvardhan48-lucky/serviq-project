@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Booking #{{ booking.booking_number }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-receipt"></i> Booking Details</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Booking Number:</strong> {{ booking.booking_number }}</p>
+                    <p><strong>Customer:</strong> {{ booking.customer.full_name }}</p>
+                    <p><strong>Customer Email:</strong> {{ booking.customer.email }}</p>
+                    <p><strong>Customer Phone:</strong> {{ booking.customer.phone }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Provider:</strong> {{ booking.provider.full_name }}</p>
+                    <p><strong>Service:</strong> {{ booking.service_name }}</p>
+                    <p><strong>Date:</strong> {{ booking.service_date.strftime('%d %b, %Y') }}</p>
+                    <p><strong>Time:</strong> {{ booking.service_time.strftime('%I:%M %p') }}</p>
+                    <p><strong>Amount:</strong> ₹{{ "%.0f"|format(booking.total_amount) }}</p>
+                    <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if booking.status == 'confirmed' else 'warning' if booking.status == 'pending' else 'info' if booking.status == 'completed' else 'danger' }}">{{ booking.status|upper }}</span></p>
+                    <p><strong>Payment:</strong> <span class="badge bg-{{ 'success' if booking.payment_status == 'paid' else 'danger' }}">{{ booking.payment_status|upper }}</span></p>
+                </div>
+            </div>
+            <hr>
+            <h5>Service Address</h5>
+            <p>{{ booking.address_line1 }}{% if booking.address_line2 %}, {{ booking.address_line2 }}{% endif %}<br>
+            {{ booking.city }} - {{ booking.pincode }}</p>
+            <a href="{{ url_for('admin_bookings') }}" class="btn btn-secondary">Back to Bookings</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

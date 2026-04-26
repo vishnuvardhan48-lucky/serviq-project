@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Book Service - {{ provider.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white"><h4 class="mb-0">Book Service</h4></div>
+                <div class="card-body">
+                    <form id="bookingForm" method="POST">
+                        <div class="mb-3"><label class="form-label fw-bold">Select Service</label>
+                            <select name="service_id" id="service_id" class="form-select" required>
+                                <option value="">Choose a service...</option>
+                                {% for service in services %}
+                                <option value="{{ service.id }}">{{ service.name }} - ₹{{ provider.starting_price }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3"><label class="form-label fw-bold">Select Date</label>
+                            <input type="date" name="service_date" id="service_date" class="form-control" min="{{ now().date() }}" required>
+                            <small class="text-muted">Please select a date to see available time slots</small>
+                        </div>
+                        
+                        <div class="mb-3"><label class="form-label fw-bold">Select Time Slot</label>
+                            <div id="timeSlotsContainer"><div class="alert alert-info"><i class="fas fa-info-circle"></i> Please select a date first to see available time slots.</div></div>
+                            <input type="hidden" name="time_slot_id" id="time_slot_id"><input type="hidden" name="service_time" id="service_time">
+                        </div>
+                        
+                        <div class="mb-3"><label class="form-label fw-bold">Service Address</label>
+                            <textarea name="address" id="address" class="form-control" rows="2" required placeholder="Enter your full address"></textarea>
+                        </div>
+                        <div class="row"><div class="col-md-6 mb-3"><label>City</label><input type="text" name="city" id="city" class="form-control" required></div>
+                        <div class="col-md-6 mb-3"><label>Pincode</label><input type="text" name="pincode" id="pincode" class="form-control" required></div></div>
+                        <button type="submit" id="submitBtn" class="btn btn-primary btn-lg w-100" disabled><i class="fas fa-credit-card"></i> Proceed to Payment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white"><h5 class="mb-0">Service Provider</h5></div>
+                <div class="card-body text-center">
+                    <img src="{{ provider.profile_photo or 'https://ui-avatars.com/api/?name=' + provider.full_name|urlencode + '&background=667eea&color=fff&size=120' }}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                    <h5>{{ provider.full_name }}</h5>
+                    <div class="text-start">
+                        <p><i class="fas fa-star text-warning"></i> {{ "%.1f"|format(provider.average_rating) }} ({{ provider.total_reviews }} reviews)</p>
+                        <p><i class="fas fa-briefcase"></i> {{ provider.years_experience }} Years Experience</p>
+                        <p><i class="fas fa-map-marker-alt"></i> {{ provider.city }}</p>
+                        <p><i class="fas fa-tag"></i> Starting from ₹{{ provider.starting_price }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('service_date'), timeSlotsContainer = document.getElementById('timeSlotsContainer'), timeSlotIdInput = document.getElementById('time_slot_id'), serviceTimeInput = document.getElementById('service_time'), submitBtn = document.getElementById('submitBtn'), serviceSelect = document.getElementById('service_id');
+    let selectedSlot = null;
+    dateInput.min = new Date().toISOString().split('T')[0];
+    async function loadTimeSlots(date) {
+        if (!date) {timeSlotsContainer.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please select a date first.</div>'; submitBtn.disabled = true; return;}
+        timeSlotsContainer.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading available time slots...</p></div>';
+        try {
+            const response = await fetch(`/api/provider/{{ provider.id }}/availability?date=${date}`);
+            const data = await response.json();
+            if (response.ok && data.slots && data.slots.length > 0) {
+                let slotsHtml = '<div class="row g-2">';
+                data.slots.forEach(slot => {slotsHtml += `<div class="col-6"><button type="button" class="btn btn-outline-primary w-100 time-slot-btn" data-slot-id="${slot.id}" data-start-time="${slot.start_time}">${slot.start_time} - ${slot.end_time}</button></div>`;});
+                slotsHtml += '</div><small class="text-muted mt-2 d-block">Click on a time slot to select it</small>';
+                timeSlotsContainer.innerHTML = slotsHtml;
+                document.querySelectorAll('.time-slot-btn').forEach(btn => {btn.addEventListener('click', function() {document.querySelectorAll('.time-slot-btn').forEach(b => {b.classList.remove('btn-primary'); b.classList.add('btn-outline-primary');}); this.classList.remove('btn-outline-primary'); this.classList.add('btn-primary'); selectedSlot = {id: this.dataset.slotId, time: this.dataset.startTime}; timeSlotIdInput.value = selectedSlot.id; serviceTimeInput.value = selectedSlot.time; if (serviceSelect.value) submitBtn.disabled = false;});});
+            } else {timeSlotsContainer.innerHTML = '<div class="alert alert-warning"><i class="fas fa-clock"></i> No time slots available for this date. Please select another date.</div>'; submitBtn.disabled = true;}
+        } catch (error) {timeSlotsContainer.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Error loading time slots. Please try again later.</div>'; submitBtn.disabled = true;}
+    }
+    dateInput.addEventListener('change', function() {this.value ? loadTimeSlots(this.value) : (timeSlotsContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Please select a date to see available time slots.</div>', submitBtn.disabled = true);});
+    serviceSelect.addEventListener('change', function() {submitBtn.disabled = !(this.value && selectedSlot);});
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {if (!selectedSlot) {e.preventDefault(); alert('Please select a time slot'); return false;} if (!serviceSelect.value) {e.preventDefault(); alert('Please select a service'); return false;} return true;});
+});
+</script>
+<style>.time-slot-btn{transition:all .3s ease}.time-slot-btn:hover{transform:translateY(-2px)}.time-slot-btn.btn-primary{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border:none;color:#fff}</style>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Register as Provider - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Register as Service Provider</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Full Name *</label>
+                                <input type="text" name="full_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Email *</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Phone *</label>
+                                <input type="tel" name="phone" class="form-control" pattern="[0-9]{10}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Password *</label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>City *</label>
+                                <input type="text" name="city" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Starting Price (₹) *</label>
+                                <input type="number" name="starting_price" class="form-control" step="100" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Years of Experience *</label>
+                                <input type="number" name="years_experience" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Profile Photo</label>
+                                <input type="file" name="profile_photo" class="form-control" accept="image/*">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Tell customers about yourself..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Services You Offer *</label>
+                            <div class="row">
+                                {% for service in services %}
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="services" value="{{ service.id }}" id="service{{ service.id }}">
+                                        <label class="form-check-label" for="service{{ service.id }}">
+                                            {{ service.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Your Location on Map *</label>
+                            <div id="map" style="height: 300px;"></div>
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+                            <small class="text-muted">Click on the map to set your location</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100">Register as Provider</button>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+                        <p>Want to book services? <a href="{{ url_for('register_customer') }}">Register as Customer</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
+<script>
+let map, marker;
+
+function initMap() {
+    const defaultLocation = {lat: 20.5937, lng: 78.9629};
+    
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: defaultLocation,
+        zoom: 5
+    });
+    
+    map.addListener('click', function(event) {
+        placeMarker(event.latLng);
+    });
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                map.setCenter(pos);
+                map.setZoom(12);
+            }
+        );
+    }
+}
+
+function placeMarker(location) {
+    if (marker) marker.setMap(null);
+    
+    marker = new google.maps.Marker({
+        position: location,
+        map: map
+    });
+    
+    document.getElementById('latitude').value = location.lat();
+    document.getElementById('longitude').value = location.lng();
+}
+
+window.onload = initMap;
+</script>
+{% endblock %}

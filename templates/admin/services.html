@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Services - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="fas fa-tools"></i> Manage Services</h4>
+            <a href="{{ url_for('add_service') }}" class="btn btn-light btn-sm">Add New Service</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Icon</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in services %}
+                        <tr>
+                            <td>{{ service.id }}</a></td>
+                            <td><i class="fas {{ service.icon }} fa-2x text-primary"></i></a></td>
+                            <td>{{ service.name }}</a></td>
+                            <td><span class="badge bg-info">{{ service.category }}</span></a></td>
+                            <td>{{ service.description[:50] }}{% if service.description|length > 50 %}...{% endif %}</a></td>
+                            <td>
+                                <a href="{{ url_for('edit_service', service_id=service.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <form method="POST" action="{{ url_for('delete_service', service_id=service.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this service?')">Delete</button>
+                                </form>
+                             </a>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Details - {{ customer.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="{{ customer.profile_photo or 'https://ui-avatars.com/api/?name=' + customer.full_name|urlencode + '&background=667eea&color=fff&size=150' }}" 
+                         class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    <h3>{{ customer.full_name }}</h3>
+                    <p class="text-muted">{{ customer.email }}</p>
+                    <p class="text-muted">{{ customer.phone }}</p>
+                    <p class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ customer.city or 'Location not specified' }}</p>
+                    <p>
+                        {% if customer.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Blocked</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Full Name:</strong> {{ customer.full_name }}</p>
+                            <p><strong>Email:</strong> {{ customer.email }}</p>
+                            <p><strong>Phone:</strong> {{ customer.phone }}</p>
+                            <p><strong>Address:</strong> {{ customer.address or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>City:</strong> {{ customer.city or 'N/A' }}</p>
+                            <p><strong>Pincode:</strong> {{ customer.pincode or 'N/A' }}</p>
+                            <p><strong>Joined:</strong> {{ customer.created_at.strftime('%d %b, %Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Recent Bookings</h5>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Booking #</th>
+                                    <th>Provider</th>
+                                    <th>Service</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                <tr>
+                                    <td><a href="{{ url_for('admin_booking_detail', booking_id=booking.id) }}">{{ booking.booking_number }}</a></td>
+                                    <td>{{ booking.provider.full_name }}</a></td>
+                                    <td>{{ booking.service_name }}</a></td>
+                                    <td>{{ booking.service_date.strftime('%d %b, %Y') }}</a></td>
+                                    <td>₹{{ "%.0f"|format(booking.total_amount) }}</a></td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if booking.status == 'completed' else 'warning' if booking.status == 'pending' else 'info' if booking.status == 'confirmed' else 'danger' }}">
+                                            {{ booking.status }}
+                                        </span>
+                                    </a>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="text-muted text-center">No bookings yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

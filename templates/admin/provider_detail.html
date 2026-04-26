@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Provider Details - {{ provider.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="{{ provider.profile_photo or 'https://ui-avatars.com/api/?name=' + provider.full_name|urlencode + '&background=28a745&color=fff&size=150' }}" 
+                         class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    <h3>{{ provider.full_name }}</h3>
+                    <p class="text-muted">{{ provider.email }}</p>
+                    <p class="text-muted">{{ provider.phone }}</p>
+                    <p class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ provider.city or 'Location not specified' }}</p>
+                    <p>
+                        {% if provider.is_approved %}
+                            <span class="badge bg-success">Approved</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Provider Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Full Name:</strong> {{ provider.full_name }}</p>
+                            <p><strong>Email:</strong> {{ provider.email }}</p>
+                            <p><strong>Phone:</strong> {{ provider.phone }}</p>
+                            <p><strong>City:</strong> {{ provider.city or 'N/A' }}</p>
+                            <p><strong>Years Experience:</strong> {{ provider.years_experience }}</p>
+                            <p><strong>Starting Price:</strong> ₹{{ "%.0f"|format(provider.starting_price) }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                {% if provider.is_approved %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Joined:</strong> {{ provider.created_at.strftime('%d %b, %Y') }}</p>
+                            <p><strong>Rating:</strong> {{ "%.1f"|format(provider.average_rating) }} ⭐ ({{ provider.total_reviews }} reviews)</p>
+                            <p><strong>Services Offered:</strong></p>
+                            {% for service in provider.services %}
+                                <span class="badge bg-primary">{{ service.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>Description</h6>
+                    <p>{{ provider.description or 'No description provided.' }}</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Recent Bookings</h5>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Booking #</th>
+                                    <th>Customer</th>
+                                    <th>Service</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                <tr>
+                                    <td><a href="{{ url_for('admin_booking_detail', booking_id=booking.id) }}">{{ booking.booking_number }}</a></td>
+                                    <td>{{ booking.customer.full_name }}</a></td>
+                                    <td>{{ booking.service_name }}</a></td>
+                                    <td>{{ booking.service_date.strftime('%d %b, %Y') }}</a></td>
+                                    <td>₹{{ "%.0f"|format(booking.total_amount) }}</a></td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if booking.status == 'completed' else 'warning' if booking.status == 'pending' else 'info' if booking.status == 'confirmed' else 'danger' }}">
+                                            {{ booking.status }}
+                                        </span>
+                                    </a>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="text-muted text-center">No bookings yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

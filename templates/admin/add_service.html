@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Add Service - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus-circle"></i> Add New Service</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label">Service Name *</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Category *</label>
+                            <input type="text" name="category" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Icon (Font Awesome class)</label>
+                            <input type="text" name="icon" class="form-control" value="fas fa-tools">
+                            <small class="text-muted">Example: fas fa-bolt, fas fa-wrench, fas fa-hammer</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Service Image</label>
+                            <input type="file" name="image" class="form-control" accept="image/*">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Add Service</button>
+                        <a href="{{ url_for('admin_services') }}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

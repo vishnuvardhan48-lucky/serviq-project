@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Bookings - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> All Bookings</h4>
+            <div class="d-flex">
+                <input type="text" id="searchBooking" class="form-control form-control-sm me-2" 
+                       placeholder="Search bookings..." style="width: 200px;">
+                <select id="statusFilter" class="form-select form-select-sm" style="width: 150px;">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="bookingsTable">
+                    <thead>
+                        <tr>
+                            <th>Booking #</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Provider</th>
+                            <th>Service</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings.items %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('admin_booking_detail', booking_id=booking.id) }}">
+                                    {{ booking.booking_number }}
+                                </a>
+                            </a>
+                            <td>{{ booking.created_at.strftime('%d-%m-%Y') }}</a>
+                            <td>{{ booking.customer.full_name }}</a>
+                            <td>{{ booking.provider.full_name }}</a>
+                            <td>{{ booking.service_name }}</a>
+                            <td>₹{{ "%.0f"|format(booking.total_amount) }}</a>
+                            <td>
+                                <span class="badge bg-{{ 'success' if booking.status == 'confirmed' 
+                                                          else 'warning' if booking.status == 'pending'
+                                                          else 'info' if booking.status == 'completed'
+                                                          else 'danger' }}">
+                                    {{ booking.status }}
+                                </span>
+                            </a>
+                            <td>
+                                <span class="badge bg-{{ 'success' if booking.payment_status == 'paid' else 'danger' }}">
+                                    {{ booking.payment_status }}
+                                </span>
+                            </a>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin_booking_detail', booking_id=booking.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-success" 
+                                            onclick="updateBookingStatus({{ booking.id }}, 'confirmed')"
+                                            {% if booking.status != 'pending' %}disabled{% endif %}
+                                            title="Confirm Booking">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="updateBookingStatus({{ booking.id }}, 'cancelled')"
+                                            {% if booking.status == 'completed' or booking.status == 'cancelled' %}disabled{% endif %}
+                                            title="Cancel Booking">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                             </a>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if bookings.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center mt-3">
+                    {% if bookings.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin_bookings', page=bookings.prev_num, status=current_status) }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in bookings.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == bookings.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_bookings', page=page_num, status=current_status) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if bookings.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin_bookings', page=bookings.next_num, status=current_status) }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function updateBookingStatus(bookingId, status) {
+    if (confirm(`Are you sure you want to mark this booking as ${status}?`)) {
+        fetch(`/admin/booking/${bookingId}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({status: status})
+        })
+        .then(response => response.json())
+        .then(data => { 
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Could not update booking status'));
+            }
+        })
+        .catch(error => {
+            alert('Error updating booking status');
+            console.error(error);
+        });
+    }
+}
+
+// Search and filter functionality
+document.getElementById('searchBooking').addEventListener('keyup', filterBookings);
+document.getElementById('statusFilter').addEventListener('change', filterBookings);
+
+function filterBookings() {
+    const searchText = document.getElementById('searchBooking').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('#bookingsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const statusCell = row.querySelector('td:nth-child(7)');
+        const status = statusCell ? statusCell.textContent.toLowerCase().trim() : '';
+        const matchesSearch = text.includes(searchText);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

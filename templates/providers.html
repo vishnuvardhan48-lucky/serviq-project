@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Find Service Providers - Serviq{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Filter Providers</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" id="filterForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Service Type</label>
+                            <select name="service" class="form-select">
+                                <option value="">All Services</option>
+                                {% for service in services %}
+                                <option value="{{ service.id }}" {% if filters.service_id == service.id %}selected{% endif %}>{{ service.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">City</label>
+                            <input type="text" name="city" class="form-control" value="{{ filters.city or '' }}" placeholder="Enter city name">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Price Range (₹)</label>
+                            <div class="row">
+                                <div class="col-6"><input type="number" name="min_price" class="form-control" value="{{ filters.min_price or '' }}" placeholder="Min"></div>
+                                <div class="col-6"><input type="number" name="max_price" class="form-control" value="{{ filters.max_price or '' }}" placeholder="Max"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Minimum Rating</label>
+                            <select name="min_rating" class="form-select">
+                                <option value="">Any Rating</option>
+                                <option value="4.5" {% if filters.min_rating == 4.5 %}selected{% endif %}>4.5+ Stars</option>
+                                <option value="4" {% if filters.min_rating == 4 %}selected{% endif %}>4+ Stars</option>
+                                <option value="3.5" {% if filters.min_rating == 3.5 %}selected{% endif %}>3.5+ Stars</option>
+                                <option value="3" {% if filters.min_rating == 3 %}selected{% endif %}>3+ Stars</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Search Near Me</label>
+                            <div class="input-group mb-2">
+                                <input type="text" id="locationInput" class="form-control" placeholder="Enter your location">
+                                <button class="btn btn-outline-primary" type="button" onclick="getUserLocation()"><i class="fas fa-location-arrow"></i></button>
+                            </div>
+                            <input type="hidden" name="lat" id="lat" value="{{ filters.lat or '' }}">
+                            <input type="hidden" name="lng" id="lng" value="{{ filters.lng or '' }}">
+                            <input type="number" name="radius" class="form-control" value="{{ filters.radius or 10 }}" placeholder="Radius (km)" step="1">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        <a href="{{ url_for('providers') }}" class="btn btn-outline-secondary w-100 mt-2">Clear Filters</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="fas fa-users"></i> <span id="providerCount">{{ providers|length }}</span> Provider{% if providers|length != 1 %}s{% endif %} Found</h4>
+                <div><span class="text-muted">Sort by:</span>
+                    <select class="form-select form-select-sm d-inline-block w-auto ms-2" id="sortSelect">
+                        <option value="rating">Rating (High to Low)</option>
+                        <option value="price_low">Price (Low to High)</option>
+                        <option value="price_high">Price (High to Low)</option>
+                        <option value="experience">Experience</option>
+                        <option value="distance">Distance (Nearby)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="providersList">
+                {% if providers %}
+                    {% for provider in providers %}
+                    <div class="card provider-card mb-3" data-provider-id="{{ provider.id }}" data-lat="{{ provider.latitude }}" data-lng="{{ provider.longitude }}" data-rating="{{ provider.average_rating }}" data-price="{{ provider.starting_price }}" data-experience="{{ provider.years_experience }}" data-distance="{{ provider.distance if provider.distance else 999999 }}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-2 text-center">
+                                    {% if provider.profile_photo and provider.profile_photo != 'default-avatar.png' %}
+                                        <img src="{{ url_for('uploaded_file', filename=provider.profile_photo) }}" 
+                                             class="provider-image" alt="{{ provider.full_name }}"
+                                             onerror="this.src='https://ui-avatars.com/api/?name={{ provider.full_name|urlencode }}&background=667eea&color=fff&size=80'">
+                                    {% else %}
+                                        <img src="https://ui-avatars.com/api/?name={{ provider.full_name|urlencode }}&background=667eea&color=fff&size=80" 
+                                             class="provider-image" alt="{{ provider.full_name }}">
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="d-flex justify-content-between">
+                                        <h5 class="card-title mb-1">{{ provider.full_name }}</h5>
+                                        {% if provider.distance %}<span class="badge bg-primary"><i class="fas fa-map-marker-alt"></i> {{ provider.distance }} km</span>{% endif %}
+                                    </div>
+                                    <p class="text-muted mb-2"><i class="fas fa-map-marker-alt"></i> {{ provider.city or 'Location not specified' }}</p>
+                                    <div class="rating-stars mb-2">
+                                        {% for i in range(5) %}
+                                            {% if i < provider.average_rating|int %}<i class="fas fa-star"></i>
+                                            {% elif i < provider.average_rating and provider.average_rating % 1 >= 0.5 %}<i class="fas fa-star-half-alt"></i>
+                                            {% else %}<i class="far fa-star"></i>{% endif %}
+                                        {% endfor %}
+                                        <span class="text-muted ms-2">({{ provider.total_reviews }} reviews)</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        {% for service in provider.services[:3] %}
+                                            <span class="service-badge">{{ service.name }}</span>
+                                        {% endfor %}
+                                        {% if provider.services|length > 3 %}<span class="service-badge">+{{ provider.services|length - 3 }} more</span>{% endif %}
+                                    </div>
+                                    <p class="mb-0"><i class="fas fa-briefcase text-muted"></i> <span class="text-muted">{{ provider.years_experience }} years experience</span></p>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <h4 class="text-primary mb-1">₹{{ "%.0f"|format(provider.starting_price) }}</h4>
+                                    <p class="text-muted small">Starting price</p>
+                                    {% if current_user.is_authenticated and current_user.is_customer() %}
+                                        <a href="{{ url_for('book_service', provider_id=provider.id) }}" class="btn btn-primary btn-sm w-100 mb-2">Book Now</a>
+                                    {% elif not current_user.is_authenticated %}
+                                        <a href="{{ url_for('login', next=request.url) }}" class="btn btn-outline-primary btn-sm w-100 mb-2">Login to Book</a>
+                                    {% elif current_user.is_provider() %}
+                                        <button class="btn btn-secondary btn-sm w-100 mb-2" disabled>Provider Account</button>
+                                    {% endif %}
+                                    <a href="{{ url_for('provider_detail', provider_id=provider.id) }}" class="btn btn-outline-secondary btn-sm w-100">View Profile</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="card text-center py-5">
+                        <div class="card-body">
+                            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                            <h5>No providers found</h5>
+                            <p class="text-muted">Try adjusting your filters</p>
+                            <a href="{{ url_for('providers') }}" class="btn btn-primary">Clear Filters</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let map, markers = [], infoWindow, autocomplete;
+
+function initMap() {
+    const defaultCenter = {lat: 20.5937, lng: 78.9629};
+    let center = ({{ filters.lat|default('null') }} && {{ filters.lng|default('null') }}) ? {lat: {{ filters.lat }}, lng: {{ filters.lng }}} : defaultCenter;
+    map = new google.maps.Map(document.getElementById('map'), {center: center, zoom: 12, mapTypeControl: true});
+    infoWindow = new google.maps.InfoWindow();
+    const input = document.getElementById('locationInput');
+    autocomplete = new google.maps.places.Autocomplete(input, {types: ['geocode'], componentRestrictions: {country: 'in'}});
+    autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+            document.getElementById('lat').value = place.geometry.location.lat();
+            document.getElementById('lng').value = place.geometry.location.lng();
+            map.setCenter(place.geometry.location);
+            map.setZoom(14);
+        }
+    });
+    addProviderMarkers();
+}
+
+function addProviderMarkers() {
+    const providers = {{ providers_json|tojson }};
+    providers.forEach(provider => {
+        if (provider.latitude && provider.longitude) {
+            let color = provider.average_rating >= 4.5 ? '#00FF00' : provider.average_rating >= 4.0 ? '#00CC00' : provider.average_rating >= 3.5 ? '#FFA500' : '#FF0000';
+            const marker = new google.maps.Marker({
+                position: {lat: provider.latitude, lng: provider.longitude}, 
+                map: map, 
+                title: provider.full_name, 
+                icon: {path: google.maps.SymbolPath.CIRCLE, fillColor: color, fillOpacity: 1, strokeWeight: 1, strokeColor: '#FFFFFF', scale: 10}, 
+                providerId: provider.id
+            });
+            
+            // Get profile photo URL for info window
+            let profilePhoto = provider.profile_photo ? 
+                "{{ url_for('uploaded_file', filename='') }}" + provider.profile_photo : 
+                'https://ui-avatars.com/api/?name=' + encodeURIComponent(provider.full_name) + '&background=667eea&color=fff&size=60';
+            
+            const content = `<div class="info-window">
+                <img src="${profilePhoto}" style="width:50px;height:50px;border-radius:50%;float:left;margin-right:10px;object-fit:cover">
+                <div>
+                    <h6>${provider.full_name}</h6>
+                    <p>⭐ ${provider.average_rating} (${provider.total_reviews} reviews)<br>💰 ₹${provider.starting_price}+<br>📍 ${provider.city}</p>
+                    <a href="/provider/${provider.id}" class="btn btn-primary btn-sm">View</a> 
+                    <a href="/book/${provider.id}" class="btn btn-success btn-sm">Book</a>
+                </div>
+            </div>`;
+            marker.addListener('click', () => {infoWindow.setContent(content); infoWindow.open(map, marker);});
+            markers.push(marker);
+        }
+    });
+}
+
+function getUserLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude, lng = position.coords.longitude; 
+            document.getElementById('lat').value = lat; 
+            document.getElementById('lng').value = lng; 
+            map.setCenter({lat: lat, lng: lng}); 
+            map.setZoom(14); 
+            document.getElementById('filterForm').submit();
+        });
+    }
+}
+
+function sortProviders(criteria) {
+    const container = document.getElementById('providersList');
+    const cards = Array.from(container.getElementsByClassName('provider-card'));
+    cards.sort((a,b) => {
+        let aVal,bVal;
+        switch(criteria) {
+            case 'rating': aVal = parseFloat(a.dataset.rating)||0; bVal = parseFloat(b.dataset.rating)||0; return bVal - aVal;
+            case 'price_low': aVal = parseFloat(a.dataset.price)||Infinity; bVal = parseFloat(b.dataset.price)||Infinity; return aVal - bVal;
+            case 'price_high': aVal = parseFloat(a.dataset.price)||0; bVal = parseFloat(b.dataset.price)||0; return bVal - aVal;
+            case 'experience': aVal = parseInt(a.dataset.experience)||0; bVal = parseInt(b.dataset.experience)||0; return bVal - aVal;
+            case 'distance': aVal = parseFloat(a.dataset.distance)||Infinity; bVal = parseFloat(b.dataset.distance)||Infinity; return aVal - bVal;
+            default: return 0;
+        }
+    });
+    container.innerHTML = ''; 
+    cards.forEach(card => container.appendChild(card));
+}
+
+document.getElementById('sortSelect').addEventListener('change', function() {sortProviders(this.value);});
+
+// Only initialize map if the element exists (for pages without map)
+if (document.getElementById('map')) {
+    window.onload = initMap;
+}
+</script>
+{% endblock %}

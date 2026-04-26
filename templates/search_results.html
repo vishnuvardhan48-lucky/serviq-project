@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - "{{ query }}"{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Search Results for "{{ query }}"</h1>
+    
+    <h3 class="mb-3">Providers ({{ providers|length }})</h3>
+    {% if providers %}
+        {% for provider in providers %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 text-center"><img src="{{ provider.profile_photo or 'https://ui-avatars.com/api/?name=' + provider.full_name|urlencode + '&background=667eea&color=fff&size=80' }}" class="rounded-circle" style="width:80px;height:80px;object-fit:cover"></div>
+                    <div class="col-md-7"><h5>{{ provider.full_name }}</h5><p class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ provider.city or 'Location not specified' }}</p><div class="rating-stars">{% for i in range(5) %}{% if i < provider.average_rating|int %}<i class="fas fa-star"></i>{% elif i < provider.average_rating and provider.average_rating % 1 >= 0.5 %}<i class="fas fa-star-half-alt"></i>{% else %}<i class="far fa-star"></i>{% endif %}{% endfor %} <span class="text-muted">({{ provider.total_reviews }} reviews)</span></div></div>
+                    <div class="col-md-3 text-end"><h4 class="text-primary">₹{{ "%.0f"|format(provider.starting_price) }}</h4><a href="{{ url_for('provider_detail', provider_id=provider.id) }}" class="btn btn-primary">View Profile</a></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}<p class="text-muted">No providers found.</p>{% endif %}
+    
+    <h3 class="mb-3 mt-4">Services ({{ services|length }})</h3>
+    {% if services %}
+        {% for service in services %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8"><h5>{{ service.name }}</h5><p class="text-muted">{{ service.category }}</p><p>{{ service.description }}</p></div>
+                    <div class="col-md-4 text-end"><a href="{{ url_for('providers', service=service.id) }}" class="btn btn-outline-primary">Find Providers</a></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}<p class="text-muted">No services found.</p>{% endif %}
+</div>
+{% endblock %}

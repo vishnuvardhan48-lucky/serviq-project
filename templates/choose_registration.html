@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Choose Registration Type - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">How would you like to use Serviq?</h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-center mb-4">Your phone number <strong>{{ session.get('phone_verified') }}</strong> has been verified.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 text-center p-4">
+                                <i class="fas fa-user fa-4x text-primary mb-3"></i>
+                                <h5>I want to book services</h5>
+                                <p class="text-muted">Find trusted professionals for your needs</p>
+                                <a href="{{ url_for('register_customer') }}" class="btn btn-primary">Register as Customer</a>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 text-center p-4">
+                                <i class="fas fa-briefcase fa-4x text-success mb-3"></i>
+                                <h5>I want to offer services</h5>
+                                <p class="text-muted">Earn money by providing your skills</p>
+                                <a href="{{ url_for('register_provider') }}" class="btn btn-success">Register as Provider</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('login') }}">Back to Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

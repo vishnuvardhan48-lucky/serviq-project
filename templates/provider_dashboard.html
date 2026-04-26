@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Provider Dashboard - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="{{ current_user.profile_photo or 'https://ui-avatars.com/api/?name=' + current_user.full_name|urlencode + '&background=28a745&color=fff&size=100' }}" 
+                         class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                    <h5>{{ current_user.full_name }}</h5>
+                    <div class="rating-stars">
+                        {% for i in range(5) %}
+                            {% if i < current_user.average_rating|int %}
+                                <i class="fas fa-star"></i>
+                            {% elif i < current_user.average_rating and current_user.average_rating % 1 >= 0.5 %}
+                                <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span>({{ current_user.total_reviews }} reviews)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="list-group">
+                <a href="#today" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                    <i class="fas fa-calendar-day"></i> Today's Bookings
+                </a>
+                <a href="#upcoming" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="fas fa-calendar-week"></i> Upcoming Bookings
+                </a>
+                <a href="#slots" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="fas fa-clock"></i> Manage Slots
+                </a>
+                <a href="#reviews" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="fas fa-star"></i> Reviews
+                </a>
+                <a href="#earnings" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="fas fa-rupee-sign"></i> Earnings
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- Today's Bookings -->
+                <div class="tab-pane active" id="today">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-calendar-day"></i> Today's Bookings</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if today_bookings %}
+                                {% for booking in today_bookings %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <h6>Booking #{{ booking.booking_number }}</h6>
+                                                <p class="mb-1">
+                                                    <strong>Customer:</strong> {{ booking.customer.full_name }}<br>
+                                                    <strong>Service:</strong> {{ booking.service_name }}<br>
+                                                    <strong>Time:</strong> {{ booking.service_time.strftime('%I:%M %p') }}<br>
+                                                    <strong>Address:</strong> {{ booking.address_line1 }}, {{ booking.city }}
+                                                </p>
+                                                <span class="badge bg-warning">{{ booking.status|upper }}</span>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <a href="{{ url_for('provider_booking_detail', booking_id=booking.id) }}" class="btn btn-primary btn-sm">View Details</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-center text-muted">No bookings for today</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Bookings -->
+                <div class="tab-pane" id="upcoming">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-calendar-week"></i> Upcoming Bookings</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if upcoming_bookings %}
+                                {% for booking in upcoming_bookings %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <h6>Booking #{{ booking.booking_number }}</h6>
+                                                <p class="mb-1">
+                                                    <strong>Customer:</strong> {{ booking.customer.full_name }}<br>
+                                                    <strong>Service:</strong> {{ booking.service_name }}<br>
+                                                    <strong>Date:</strong> {{ booking.service_date.strftime('%d %b, %Y') }}<br>
+                                                    <strong>Time:</strong> {{ booking.service_time.strftime('%I:%M %p') }}
+                                                </p>
+                                                <span class="badge bg-warning">{{ booking.status|upper }}</span>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <a href="{{ url_for('provider_booking_detail', booking_id=booking.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-center text-muted">No upcoming bookings</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Manage Slots -->
+                <div class="tab-pane" id="slots">
+                    <div class="card">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-clock"></i> Manage Time Slots</h5>
+                            <a href="{{ url_for('manage_time_slots') }}" class="btn btn-light btn-sm">Manage Slots</a>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Click "Manage Slots" to add or remove your available time slots.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reviews -->
+                <div class="tab-pane" id="reviews">
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0"><i class="fas fa-star"></i> Customer Reviews</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_reviews %}
+                                {% for review in recent_reviews %}
+                                <div class="mb-4 border-bottom pb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6>{{ review.customer.full_name }}</h6>
+                                        <div class="rating-stars">
+                                            {% for i in range(5) %}
+                                                {% if i < review.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p>{{ review.comment }}</p>
+                                    <small class="text-muted">{{ review.created_at.strftime('%d %b, %Y') }}</small>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-center text-muted">No reviews yet</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Earnings -->
+                <div class="tab-pane" id="earnings">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-rupee-sign"></i> Earnings Overview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center mb-4">
+                                <div class="col-6">
+                                    <h3>₹{{ "%.0f"|format(total_earnings) }}</h3>
+                                    <small class="text-muted">Total Earnings</small>
+                                </div>
+                                <div class="col-6">
+                                    <h3>{{ completed_bookings }}</h3>
+                                    <small class="text-muted">Completed Jobs</small>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('provider_earnings') }}" class="btn btn-outline-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="{{ current_user.profile_photo or 'https://ui-avatars.com/api/?name=' + current_user.full_name|urlencode + '&background=667eea&color=fff&size=100' }}" 
+                         class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                    <h5>{{ current_user.full_name }}</h5>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                    <p class="text-muted">{{ current_user.phone }}</p>
+                </div>
+            </div>
+            
+            <div class="list-group">
+                <a href="#upcoming" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                    <i class="fas fa-calendar"></i> Upcoming Bookings
+                </a>
+                <a href="#past" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="fas fa-history"></i> Past Bookings
+                </a>
+                <a href="#profile" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="fas fa-user-cog"></i> Profile Settings
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- Upcoming Bookings -->
+                <div class="tab-pane active" id="upcoming">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Upcoming Bookings</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if upcoming_bookings %}
+                                {% for booking in upcoming_bookings %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <h6>Booking #{{ booking.booking_number }}</h6>
+                                                <p class="mb-1">
+                                                    <strong>Service:</strong> {{ booking.service_name }}<br>
+                                                    <strong>Provider:</strong> {{ booking.provider.full_name }}<br>
+                                                    <strong>Date:</strong> {{ booking.service_date.strftime('%d %b, %Y') }} at {{ booking.service_time.strftime('%I:%M %p') }}
+                                                </p>
+                                                <span class="badge bg-warning">{{ booking.status|upper }}</span>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <a href="{{ url_for('customer_booking_detail', booking_id=booking.id) }}" class="btn btn-primary btn-sm">View Details</a>
+                                                {% if booking.status == 'pending' %}
+                                                <form method="POST" action="{{ url_for('cancel_booking', booking_id=booking.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Cancel this booking?')">Cancel</button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-center text-muted">No upcoming bookings</p>
+                                <div class="text-center">
+                                    <a href="{{ url_for('providers') }}" class="btn btn-primary">Find Services</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Past Bookings -->
+                <div class="tab-pane" id="past">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-history"></i> Past Bookings</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if past_bookings %}
+                                {% for booking in past_bookings %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <h6>Booking #{{ booking.booking_number }}</h6>
+                                                <p class="mb-1">
+                                                    <strong>Service:</strong> {{ booking.service_name }}<br>
+                                                    <strong>Provider:</strong> {{ booking.provider.full_name }}<br>
+                                                    <strong>Completed:</strong> {{ booking.completed_date.strftime('%d %b, %Y') }}
+                                                </p>
+                                                <span class="badge bg-success">COMPLETED</span>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <a href="{{ url_for('customer_booking_detail', booking_id=booking.id) }}" class="btn btn-outline-primary btn-sm">View Details</a>
+                                                <button class="btn btn-outline-warning btn-sm mt-2" onclick="showReviewModal({{ booking.id }})">Add Review</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-center text-muted">No past bookings</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profile Settings -->
+                <div class="tab-pane" id="profile">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-user-cog"></i> Profile Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('update_profile') }}" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label>Full Name</label>
+                                    <input type="text" name="full_name" class="form-control" value="{{ current_user.full_name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Phone</label>
+                                    <input type="tel" name="phone" class="form-control" value="{{ current_user.phone }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Address</label>
+                                    <input type="text" name="address" class="form-control" value="{{ current_user.address or '' }}">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label>City</label>
+                                        <input type="text" name="city" class="form-control" value="{{ current_user.city or '' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Pincode</label>
+                                        <input type="text" name="pincode" class="form-control" value="{{ current_user.pincode or '' }}">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Profile Photo</label>
+                                    <input type="file" name="profile_photo" class="form-control" accept="image/*">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
+                            
+                            <hr>
+                            
+                            <h6>Change Password</h6>
+                            <form method="POST" action="{{ url_for('change_password') }}">
+                                <div class="mb-3">
+                                    <label>Current Password</label>
+                                    <input type="password" name="current_password" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>New Password</label>
+                                    <input type="password" name="new_password" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Confirm New Password</label>
+                                    <input type="password" name="confirm_password" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-warning">Change Password</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showReviewModal(bookingId) {
+    const rating = prompt("Rate your experience (1-5 stars):");
+    if (rating && rating >= 1 && rating <= 5) {
+        const comment = prompt("Write your review:");
+        if (comment) {
+            fetch(`/customer/add-review/${bookingId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `rating=${rating}&comment=${encodeURIComponent(comment)}`
+            }).then(() => location.reload());
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Booking #{{ booking.booking_number }} - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-receipt"></i> Booking Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Booking Number:</strong> {{ booking.booking_number }}</p>
+                            <p><strong>Service:</strong> {{ booking.service_name }}</p>
+                            <p><strong>Provider:</strong> {{ booking.provider.full_name }}</p>
+                            <p><strong>Customer:</strong> {{ booking.customer.full_name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> {{ booking.service_date.strftime('%d %b, %Y') }}</p>
+                            <p><strong>Time:</strong> {{ booking.service_time.strftime('%I:%M %p') }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{{ 'success' if booking.status == 'confirmed' else 'warning' if booking.status == 'pending' else 'info' if booking.status == 'completed' else 'danger' }}">
+                                    {{ booking.status|upper }}
+                                </span>
+                            </p>
+                            <p><strong>Payment:</strong> 
+                                <span class="badge bg-{{ 'success' if booking.payment_status == 'paid' else 'danger' }}">
+                                    {{ booking.payment_status|upper }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5>Service Address</h5>
+                    <p>{{ booking.address_line1 }}{% if booking.address_line2 %}, {{ booking.address_line2 }}{% endif %}<br>
+                    {{ booking.city }} - {{ booking.pincode }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            {% if current_user.id == booking.provider_id or current_user.is_admin() %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-edit"></i> Update Status</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('update_booking_status', booking_id=booking.id) }}">
+                        <select name="status" class="form-select mb-2">
+                            <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- CHAT SECTION - CORRECTED -->
+            {% if current_user.id == booking.customer_id or current_user.id == booking.provider_id %}
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-comments"></i> Chat</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if current_user.role == 'provider' %}
+                        <p>Discuss details with <strong>{{ booking.customer.full_name }}</strong> (Customer)</p>
+                    {% elif current_user.role == 'customer' %}
+                        <p>Discuss details with <strong>{{ booking.provider.full_name }}</strong> (Service Provider)</p>
+                    {% else %}
+                        <p>Discuss details with the other party</p>
+                    {% endif %}
+                    <a href="{{ url_for('messages', booking_id=booking.id) }}" class="btn btn-info">
+                        <i class="fas fa-comment"></i> Open Chat
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h5>Total Revenue</h5>
+                    <h2>₹{{ "{:,.0f}".format(total_revenue) }}</h2>
+                    <small>Lifetime earnings</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <h5>Platform Fee (10%)</h5>
+                    <h2>₹{{ "{:,.0f}".format(platform_fee) }}</h2>
+                    <small>Service charge</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h5>Provider Payout</h5>
+                    <h2>₹{{ "{:,.0f}".format(provider_payout) }}</h2>
+                    <small>To be paid to providers</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Bookings by Status</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Status</th><th>Count</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for status, count in bookings_by_status %}
+                            <tr>
+                                <td><span class="badge bg-{{ 'warning' if status == 'pending' else 'info' if status == 'confirmed' else 'success' if status == 'completed' else 'danger' }}">{{ status }}</span></a>
+                                <td>{{ count }}</a>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Top Providers by Bookings</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Provider</th><th>Bookings</th><th>Revenue</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for provider in top_providers %}
+                            <tr>
+                                <td>{{ provider.full_name }}</a></td>
+                                <td>{{ provider.total_bookings }}</a></td>
+                                <td>₹{{ "{:,.0f}".format(provider.total_revenue) }}</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

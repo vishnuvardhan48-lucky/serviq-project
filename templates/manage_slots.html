@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Time Slots - Serviq{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row"><div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-clock"></i> Manage Your Time Slots</h4>
+                <button class="btn btn-light btn-sm" onclick="showAddSlotModal()"><i class="fas fa-plus"></i> Add New Slot</button>
+            </div>
+            <div class="card-body">
+                {% if slots %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Date</th><th>Start Time</th><th>End Time</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for slot in slots %}
+                            <tr>
+                                <td>{{ slot.date.strftime('%d %b, %Y') }}</td>
+                                <td>{{ slot.start_time.strftime('%I:%M %p') }}</td>
+                                <td>{{ slot.end_time.strftime('%I:%M %p') }}</td>
+                                <td>{% if slot.is_booked %}<span class="badge bg-danger">Booked</span>{% else %}<span class="badge bg-success">Available</span>{% endif %}</td>
+                                <td>{% if not slot.is_booked %}<form method="POST" action="{{ url_for('delete_time_slot', slot_id=slot.id) }}" class="d-inline"><button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this slot?')"><i class="fas fa-trash"></i> Delete</button></form>{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}<p class="text-center text-muted py-4">No time slots added yet. Click "Add New Slot" to create your first time slot.</p>{% endif %}
+            </div>
+        </div>
+    </div></div>
+</div>
+
+<div class="modal fade" id="addSlotModal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Add New Time Slot</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+<form method="POST">
+    <div class="modal-body">
+        <div class="mb-3"><label>Date</label><input type="date" name="date" class="form-control" min="{{ now().date() }}" required></div>
+        <div class="mb-3"><label>Start Time</label><input type="time" name="start_time" class="form-control" required></div>
+        <div class="mb-3"><label>End Time</label><input type="time" name="end_time" class="form-control" required></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Add Slot</button></div>
+</form></div></div></div>
+
+<script>function showAddSlotModal(){new bootstrap.Modal(document.getElementById('addSlotModal')).show();}</script>
+{% endblock %}
